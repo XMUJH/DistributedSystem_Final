@@ -1,9 +1,9 @@
 package main
 
 //
-// start the LoadBlancer process
+// start the LoadBalancer process
 //
-// go run loadblancer.go
+// go run loadbalancer.go
 //
 
 import "core"
@@ -16,11 +16,11 @@ import (
 	"net/http"
 )
 
-type LoadBlancerHandler struct {
-	lb *LoadBlancer
+type LoadBalancerHandler struct {
+	lb *core.LoadBalancer
 }
 
-func (lbh *LoadBlancerHandler) Transfer(res http.ResponseWriter, req *http.Request) {
+func (lbh *LoadBalancerHandler) Transfer(res http.ResponseWriter, req *http.Request) {
 	msg, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		res.Write([]byte(err.Error()))
@@ -30,9 +30,9 @@ func (lbh *LoadBlancerHandler) Transfer(res http.ResponseWriter, req *http.Reque
         return
     }
 
-	//Load Blancer
-	//TODO
+	//Load Balancer
 	res = lbh.lb.TransferRequest(res, req)
+	fmt.Println("Request Transferred by LB")
 
 	//Output Format
 	writeLen, err := res.Write(msg)
@@ -42,14 +42,14 @@ func (lbh *LoadBlancerHandler) Transfer(res http.ResponseWriter, req *http.Reque
 }
 
 func main() {
-	lbh := LoadBlancerHandler{}
-	lbh.lb := core.Initiation()
+	lbh := LoadBalancerHandler{}
+	lbh.lb = core.InitiationLB()
 
 	time.Sleep(100 * time.Millisecond)
 	handleHttp(&lbh)
 }
 
-func handleHttp(lbh *LoadBlancerHandler) {
+func handleHttp(lbh *LoadBalancerHandler) {
 	http.HandleFunc("/", lbh.Transfer)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

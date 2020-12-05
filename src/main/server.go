@@ -6,7 +6,7 @@ package main
 // go run server.go
 //
 
-//import "mr"
+import "core"
 import "time"
 import "fmt"
 import (
@@ -16,8 +16,11 @@ import (
 	"net/http"
 )
 
+type ServerHandler struct {
+	s *core.Server
+}
 
-func ServerHandler(res http.ResponseWriter, req *http.Request) {
+func (sh *ServerHandler) HandleRequest(res http.ResponseWriter, req *http.Request) {
 	msg, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		res.Write([]byte(err.Error()))
@@ -29,7 +32,7 @@ func ServerHandler(res http.ResponseWriter, req *http.Request) {
 
 	//Server Process Request
 	//TODO
-	fmt.Println("This is a Server")
+	fmt.Println("Request Handled by Server")
 
 	//Output Format
 	noUse := "This msg is from server"
@@ -52,12 +55,15 @@ func ServerHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	sh := ServerHandler{}
+	sh.s = core.InitiationServer()
+
 	time.Sleep(100 * time.Millisecond)
-	handleHttp()
+	handleHttp(&sh)
 }
 
-func handleHttp() {
-	http.HandleFunc("/", ServerHandler)
+func handleHttp(sh *ServerHandler) {
+	http.HandleFunc("/", sh.HandleRequest)
 	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		log.Fatal(err)

@@ -12,3 +12,11 @@ type RegisterServerReply struct {
 
 }
 
+type ReportLoadArgs struct {
+
+}
+
+type ReportLoadReply struct {
+
+}
+

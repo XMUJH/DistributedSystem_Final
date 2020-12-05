@@ -1,5 +1,5 @@
 package core
 
-type Server struct {
+type ServerInfo struct {
 	
 }

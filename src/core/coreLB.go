@@ -2,6 +2,7 @@ package core
 
 import (
 	"log"
+	"fmt"
 )
 import "net"
 import "net/rpc"
@@ -10,15 +11,15 @@ import "net/http/httputil"
 import "net/url"
 
 
-type LoadBlancer struct {
-	allServers []Server
+type LoadBalancer struct {
+	allServers []ServerInfo
 }
 
 //
 // create a LB
 //
-func Initiation() *LoadBlancer {
-	lb := LoadBlancer{}
+func InitiationLB() *LoadBalancer {
+	lb := LoadBalancer{}
 
 	lb.server()
 	return &lb
@@ -27,7 +28,7 @@ func Initiation() *LoadBlancer {
 //
 // start a thread that listens for RPCs
 //
-func (lb *LoadBlancer) server() {
+func (lb *LoadBalancer) server() {
 	rpc.Register(lb)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":1234")
@@ -39,12 +40,20 @@ func (lb *LoadBlancer) server() {
 }
 
 // Server Registration
-func (lb *LoadBlancer) RegisterServer(args *RegisterServerArgs, reply *RegisterServerReply) error {
+func (lb *LoadBalancer) RegisterServer(args *RegisterServerArgs, reply *RegisterServerReply) error {
+	//TODO
+	fmt.Println("Server Registered")
+	return nil
+}
+
+// Server Report Load
+func (lb *LoadBalancer) ReportLoad(args *ReportLoadArgs, reply *ReportLoadReply) error {
+	//TODO
 	return nil
 }
 
 // Transfer Request
-func (lb *LoadBlancer) TransferRequest(res http.ResponseWriter, req *http.Request) http.ResponseWriter {
+func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Request) http.ResponseWriter {
 	//TODO 
 	//Implement LB Algorithm
 	url, _ := url.Parse("http://localhost:8081")
