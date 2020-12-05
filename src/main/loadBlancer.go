@@ -6,7 +6,7 @@ package main
 // go run loadblancer.go
 //
 
-//import "mr"
+import "core"
 import "time"
 import "fmt"
 import (
@@ -14,12 +14,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 )
 
+type LoadBlancerHandler struct {
+	lb *LoadBlancer
+}
 
-func LoadBlancerHandler(res http.ResponseWriter, req *http.Request) {
+func (lbh *LoadBlancerHandler) Transfer(res http.ResponseWriter, req *http.Request) {
 	msg, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		res.Write([]byte(err.Error()))
@@ -31,16 +32,7 @@ func LoadBlancerHandler(res http.ResponseWriter, req *http.Request) {
 
 	//Load Blancer
 	//TODO
-	fmt.Println("This is a Load Blancer")
-	url, _ := url.Parse("http://localhost:8081")
-	proxy := httputil.NewSingleHostReverseProxy(url)
-
-	req.URL.Host = url.Host
-	req.URL.Scheme = url.Scheme
-	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
-	req.Host = url.Host
-
-	proxy.ServeHTTP(res, req)
+	res = lbh.lb.TransferRequest(res, req)
 
 	//Output Format
 	writeLen, err := res.Write(msg)
@@ -50,12 +42,15 @@ func LoadBlancerHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	lbh := LoadBlancerHandler{}
+	lbh.lb := core.Initiation()
+
 	time.Sleep(100 * time.Millisecond)
-	handleHttp()
+	handleHttp(&lbh)
 }
 
-func handleHttp() {
-	http.HandleFunc("/", LoadBlancerHandler)
+func handleHttp(lbh *LoadBlancerHandler) {
+	http.HandleFunc("/", lbh.Transfer)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal(err)
