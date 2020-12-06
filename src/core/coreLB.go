@@ -14,6 +14,8 @@ import "net/url"
 
 type LoadBalancer struct {
 	allServers map[string]float64
+	index map[string]int32
+	serverCnt int32
 }
 
 //
@@ -22,6 +24,8 @@ type LoadBalancer struct {
 func InitiationLB(ip string) *LoadBalancer {
 	lb := LoadBalancer{}
 	lb.allServers = make(map[string]float64)
+	lb.index = make(map[string]int32)
+	lb.serverCnt = 0
 
 	lb.server(ip)
 	return &lb
@@ -44,8 +48,11 @@ func (lb *LoadBalancer) server(ip string) {
 // Server Registration
 func (lb *LoadBalancer) RegisterServer(args *RegisterServerArgs, reply *RegisterServerReply) error {
 	
-	lb.allServers[args.Info.Address] = args.Info.Load;
+	lb.allServers[args.Info.Address] = args.Info.Load
+	lb.serverCnt += 1
+	lb.index[args.Info.Address] = lb.serverCnt
 	fmt.Println("Server Registered")
+	fmt.Println(lb.index)
 
 	return nil
 }
