@@ -11,7 +11,9 @@ import "net/http"
 import "net/http/httputil"
 import "net/url"
 import "strconv"
+import "sync"
 
+var mapLock sync.Mutex
 
 type LoadBalancer struct {
 	allServers map[string]float64
@@ -48,10 +50,13 @@ func (lb *LoadBalancer) server(ip string) {
 
 // Server Registration
 func (lb *LoadBalancer) RegisterServer(args *RegisterServerArgs, reply *RegisterServerReply) error {
-	
+
+	mapLock.Lock()
 	lb.allServers[args.Info.Address] = args.Info.Load
 	lb.serverCnt += 1
 	lb.index[args.Info.Address] = lb.serverCnt
+	mapLock.Unlock()
+
 	fmt.Println("Server Registered")
 	fmt.Println(lb.index)
 
@@ -61,11 +66,14 @@ func (lb *LoadBalancer) RegisterServer(args *RegisterServerArgs, reply *Register
 // Server Report Load
 func (lb *LoadBalancer) ReportLoad(args *ReportLoadArgs, reply *ReportLoadReply) error {
 	
+	mapLock.Lock()
 	_, ok := lb.allServers[args.Info.Address]
 	if(ok) {
 		lb.allServers[args.Info.Address] = args.Info.Load;
+		mapLock.Unlock()
 		//fmt.Println("Load Reported")
 	} else {
+		mapLock.Unlock()
 		args2 := RegisterServerArgs{}
 		reply2 := RegisterServerReply{}
 		args2.Info = args.Info
@@ -80,9 +88,11 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 
 	//LB Algorithm
 	var listServer = []ServerInfo{}
+	mapLock.Lock()
 	for k, v := range lb.allServers {
 		listServer = append(listServer, ServerInfo {k, v})
 	}
+	mapLock.Unlock()
 
 	sort.Slice(listServer, func(i, j int) bool {
 		return listServer[i].Load < listServer[j].Load 
