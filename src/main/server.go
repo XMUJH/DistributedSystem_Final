@@ -31,7 +31,6 @@ func (sh *ServerHandler) HandleRequest(res http.ResponseWriter, req *http.Reques
     }
 
 	//Server Process Request
-	//TODO
 	fmt.Println("Request Handled by Server")
 
 	//Output Format
@@ -55,16 +54,22 @@ func (sh *ServerHandler) HandleRequest(res http.ResponseWriter, req *http.Reques
 }
 
 func main() {
+	ip, err := core.ExternalIP()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Server Running on "+ip.String()+":8081")
+
 	sh := ServerHandler{}
-	sh.s = core.InitiationServer()
+	sh.s = core.InitiationServer(ip.String()+":8081")
 
 	time.Sleep(100 * time.Millisecond)
-	handleHttp(&sh)
+	handleHttp(&sh, ip.String())
 }
 
-func handleHttp(sh *ServerHandler) {
+func handleHttp(sh *ServerHandler, ip string) {
 	http.HandleFunc("/", sh.HandleRequest)
-	err := http.ListenAndServe(":8081", nil)
+	err := http.ListenAndServe(ip+":8081", nil)
 	if err != nil {
 		log.Fatal(err)
 	}

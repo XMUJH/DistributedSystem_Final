@@ -5,7 +5,7 @@ package core
 //
 
 type RegisterServerArgs struct {
-
+	Info ServerInfo
 }
 
 type RegisterServerReply struct {
@@ -13,7 +13,7 @@ type RegisterServerReply struct {
 }
 
 type ReportLoadArgs struct {
-
+	Info ServerInfo
 }
 
 type ReportLoadReply struct {

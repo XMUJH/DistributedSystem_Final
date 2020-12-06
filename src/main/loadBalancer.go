@@ -10,7 +10,6 @@ import "core"
 import "time"
 import "fmt"
 import (
-	//"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,7 +19,7 @@ type LoadBalancerHandler struct {
 	lb *core.LoadBalancer
 }
 
-func (lbh *LoadBalancerHandler) Transfer(res http.ResponseWriter, req *http.Request) {
+func (lbh *LoadBalancerHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	msg, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		res.Write([]byte(err.Error()))
@@ -32,8 +31,7 @@ func (lbh *LoadBalancerHandler) Transfer(res http.ResponseWriter, req *http.Requ
 
 	//Load Balancer
 	res = lbh.lb.TransferRequest(res, req)
-	fmt.Println("Request Transferred by LB")
-
+	
 	//Output Format
 	writeLen, err := res.Write(msg)
 	if err != nil || writeLen != len(msg) {
@@ -42,16 +40,22 @@ func (lbh *LoadBalancerHandler) Transfer(res http.ResponseWriter, req *http.Requ
 }
 
 func main() {
+	ip, err := core.ExternalIP()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("LoadBalancer Running on "+ip.String()+":8080")
+
 	lbh := LoadBalancerHandler{}
-	lbh.lb = core.InitiationLB()
+	lbh.lb = core.InitiationLB(ip.String())
 
 	time.Sleep(100 * time.Millisecond)
-	handleHttp(&lbh)
+	handleHttp(&lbh, ip.String())
 }
 
-func handleHttp(lbh *LoadBalancerHandler) {
-	http.HandleFunc("/", lbh.Transfer)
-	err := http.ListenAndServe(":8080", nil)
+func handleHttp(lbh *LoadBalancerHandler, ip string) {
+	//http.HandleFunc("/", lbh.Transfer)
+	err := http.ListenAndServe(ip+":8080", lbh)
 	if err != nil {
 		log.Fatal(err)
 	}
