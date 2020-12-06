@@ -19,6 +19,8 @@ type LoadBalancer struct {
 	allServers map[string]float64
 	index map[string]int
 	serverCnt int
+
+	proxyMap map[string]*httputil.ReverseProxy
 }
 
 //
@@ -28,6 +30,7 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb := LoadBalancer{}
 	lb.allServers = make(map[string]float64)
 	lb.index = make(map[string]int)
+	lb.proxyMap = make(map[string]*httputil.ReverseProxy)
 	lb.serverCnt = 0
 
 	lb.server(ip)
@@ -55,6 +58,10 @@ func (lb *LoadBalancer) RegisterServer(args *RegisterServerArgs, reply *Register
 	lb.allServers[args.Info.Address] = args.Info.Load
 	lb.serverCnt += 1
 	lb.index[args.Info.Address] = lb.serverCnt
+
+	url, _ := url.Parse("http://"+args.Info.Address)
+	proxy := httputil.NewSingleHostReverseProxy(url)
+	lb.proxyMap[args.Info.Address] = proxy
 	mapLock.Unlock()
 
 	fmt.Println("Server Registered")
@@ -98,19 +105,18 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 		return listServer[i].Load < listServer[j].Load 
 	})
 
-	fmt.Println(listServer)
+	//fmt.Println(listServer)
 
 	//Reverse Proxy
 	if(len(listServer)>0) {
 		url, _ := url.Parse("http://"+listServer[0].Address)
-		proxy := httputil.NewSingleHostReverseProxy(url)
 
 		req.URL.Host = url.Host
 		req.URL.Scheme = url.Scheme
 		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
 		req.Host = url.Host
 
-		proxy.ServeHTTP(res, req)
+		lb.proxyMap[listServer[0].Address].ServeHTTP(res, req)
 		fmt.Println("Request Transferred to server "+strconv.Itoa(lb.index[listServer[0].Address]))
 	} else {
 		fmt.Println("Request Transfer Failed Because No Active Server Exists")
