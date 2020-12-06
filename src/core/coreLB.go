@@ -10,12 +10,13 @@ import "net/rpc"
 import "net/http"
 import "net/http/httputil"
 import "net/url"
+import "strconv"
 
 
 type LoadBalancer struct {
 	allServers map[string]float64
-	index map[string]int32
-	serverCnt int32
+	index map[string]int
+	serverCnt int
 }
 
 //
@@ -24,7 +25,7 @@ type LoadBalancer struct {
 func InitiationLB(ip string) *LoadBalancer {
 	lb := LoadBalancer{}
 	lb.allServers = make(map[string]float64)
-	lb.index = make(map[string]int32)
+	lb.index = make(map[string]int)
 	lb.serverCnt = 0
 
 	lb.server(ip)
@@ -100,7 +101,7 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 		req.Host = url.Host
 
 		proxy.ServeHTTP(res, req)
-		fmt.Println("Request Transferred by LB")
+		fmt.Println("Request Transferred to server "+strconv.Itoa(lb.index[listServer[0].Address]))
 	} else {
 		fmt.Println("Request Transfer Failed Because No Active Server Exists")
 	}
