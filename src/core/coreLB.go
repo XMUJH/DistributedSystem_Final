@@ -18,6 +18,7 @@ import "time"
 var mapLock sync.Mutex
 var rrLock sync.Mutex
 var benchMarkLock sync.Mutex
+var startLock sync.Mutex
 
 type LoadBalancer struct {
 	allServers map[string]float64
@@ -31,6 +32,8 @@ type LoadBalancer struct {
 	maxDmin []float64
 	loadMonitor map[string][]float64
 	requestCnt map[string]int
+
+	isStart bool
 }
 
 //
@@ -47,10 +50,10 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.maxDmin = []float64{}
 	lb.loadMonitor = make(map[string][]float64)
 	lb.requestCnt = make(map[string]int)
+	lb.isStart = false
 
 	lb.server(ip)
 
-	go lb.benchmarks()
 	return &lb
 }
 
@@ -110,6 +113,16 @@ func (lb *LoadBalancer) ReportLoad(args *ReportLoadArgs, reply *ReportLoadReply)
 
 // Transfer Request
 func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Request) {
+	//Start Benchmarks
+	if(lb.isStart == false) {
+		startLock.Lock()
+		if(lb.isStart == false) {
+			lb.isStart = true
+			go lb.benchmarks()
+		}
+		startLock.Unlock()
+	}
+
 	//Reverse Proxy
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
@@ -130,7 +143,7 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 
 		lb.proxyMap[dist].ServeHTTP(res, req)
 		fmt.Println("Request Transferred to server "+strconv.Itoa(lb.index[dist]))
-		
+
 		benchMarkLock.Lock()
 		lb.requestCnt[dist]++;
 		benchMarkLock.Unlock()
