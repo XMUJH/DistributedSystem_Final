@@ -12,15 +12,25 @@ import "net/http/httputil"
 import "net/url"
 import "strconv"
 import "sync"
+import "math/rand"
+import "time"
 
 var mapLock sync.Mutex
+var rrLock sync.Mutex
+var benchMarkLock sync.Mutex
 
 type LoadBalancer struct {
 	allServers map[string]float64
 	index map[string]int
 	serverCnt int
+	originalList []string
+	lastServer int
 
 	proxyMap map[string]*httputil.ReverseProxy
+
+	maxDmin []float64
+	loadMonitor map[string][]float64
+	requestCnt map[string]int
 }
 
 //
@@ -32,8 +42,15 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.index = make(map[string]int)
 	lb.proxyMap = make(map[string]*httputil.ReverseProxy)
 	lb.serverCnt = 0
+	lb.originalList = []string{}
+	lb.lastServer = -1;
+	lb.maxDmin = []float64{}
+	lb.loadMonitor = make(map[string][]float64)
+	lb.requestCnt = make(map[string]int)
 
 	lb.server(ip)
+
+	go lb.benchmarks()
 	return &lb
 }
 
@@ -58,6 +75,7 @@ func (lb *LoadBalancer) RegisterServer(args *RegisterServerArgs, reply *Register
 	lb.allServers[args.Info.Address] = args.Info.Load
 	lb.serverCnt += 1
 	lb.index[args.Info.Address] = lb.serverCnt
+	lb.originalList = append(lb.originalList, args.Info.Address)
 
 	url, _ := url.Parse("http://"+args.Info.Address)
 	proxy := httputil.NewSingleHostReverseProxy(url)
@@ -91,9 +109,38 @@ func (lb *LoadBalancer) ReportLoad(args *ReportLoadArgs, reply *ReportLoadReply)
 }
 
 // Transfer Request
-func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Request) http.ResponseWriter {
+func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Request) {
+	//Reverse Proxy
+	if(len(lb.allServers)>0) {
+		//LB Algorithm
+		dist := lb.minLoad()
 
-	//LB Algorithm
+		//rrLock.Lock()
+		//dist := lb.roundRobin()
+		//rrLock.Unlock()
+
+		//dist := lb.randomSelect()
+
+		url, _ := url.Parse("http://"+dist)
+
+		req.URL.Host = url.Host
+		req.URL.Scheme = url.Scheme
+		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+		req.Host = url.Host
+
+		lb.proxyMap[dist].ServeHTTP(res, req)
+		fmt.Println("Request Transferred to server "+strconv.Itoa(lb.index[dist]))
+		
+		benchMarkLock.Lock()
+		lb.requestCnt[dist]++;
+		benchMarkLock.Unlock()
+	} else {
+		fmt.Println("Request Transfer Failed Because No Active Server Exists")
+	}
+}
+
+// Min Load
+func (lb *LoadBalancer) minLoad() string {
 	var listServer = []ServerInfo{}
 	mapLock.Lock()
 	for k, v := range lb.allServers {
@@ -107,19 +154,67 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 
 	//fmt.Println(listServer)
 
-	//Reverse Proxy
-	if(len(listServer)>0) {
-		url, _ := url.Parse("http://"+listServer[0].Address)
+	return listServer[0].Address
+}
 
-		req.URL.Host = url.Host
-		req.URL.Scheme = url.Scheme
-		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
-		req.Host = url.Host
-
-		lb.proxyMap[listServer[0].Address].ServeHTTP(res, req)
-		fmt.Println("Request Transferred to server "+strconv.Itoa(lb.index[listServer[0].Address]))
-	} else {
-		fmt.Println("Request Transfer Failed Because No Active Server Exists")
+//Round Robin
+func (lb *LoadBalancer) roundRobin() string {
+	lb.lastServer++
+	if(lb.lastServer>=len(lb.originalList)) {
+		lb.lastServer = 0
 	}
-	return res
+
+	return lb.originalList[lb.lastServer]
+}
+
+//Random Selection
+func (lb *LoadBalancer) randomSelect() string {
+	rand.Seed(time.Now().Unix())
+	
+	result := rand.Intn(lb.serverCnt)
+
+	return lb.originalList[result]
+}
+
+//benchmarks
+func (lb *LoadBalancer) benchmarks() {
+	for true {
+		time.Sleep(time.Second * 2)
+
+		mapLock.Lock()
+		for k, v := range lb.allServers {
+			lb.loadMonitor[k]=append(lb.loadMonitor[k], v)
+		}
+		mapLock.Unlock()
+
+		var cntList = []int{}
+		flag := false
+		benchMarkLock.Lock()
+		for k, v := range lb.requestCnt {
+			cntList = append(cntList, v)
+			if(v!=0) {
+				flag=true
+			}
+			lb.requestCnt[k] = 0
+		}
+		benchMarkLock.Unlock()
+
+		sort.Slice(cntList, func(i, j int) bool {
+			return cntList[i] < cntList[j]
+		})
+
+		if(len(cntList)!=0) {
+			lb.maxDmin = append(lb.maxDmin, float64(cntList[len(cntList)-1])/float64(cntList[0]))
+		}
+
+		if(flag==false) {
+			for k, v := range lb.loadMonitor {
+				fmt.Println(k)
+				fmt.Println(v)
+			}
+			fmt.Println("max Divide min")
+			fmt.Println(lb.maxDmin)
+		}
+
+	}
 }

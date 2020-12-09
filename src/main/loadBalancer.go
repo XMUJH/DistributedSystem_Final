@@ -20,7 +20,7 @@ type LoadBalancerHandler struct {
 }
 
 func (lbh *LoadBalancerHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	msg, err := ioutil.ReadAll(req.Body)
+	_, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		res.Write([]byte(err.Error()))
 		return
@@ -30,13 +30,7 @@ func (lbh *LoadBalancerHandler) ServeHTTP(res http.ResponseWriter, req *http.Req
     }
 
 	//Load Balancer
-	res = lbh.lb.TransferRequest(res, req)
-	
-	//Output Format
-	writeLen, err := res.Write(msg)
-	if err != nil || writeLen != len(msg) {
-		log.Println(err, "write len:", writeLen)
-	}
+	lbh.lb.TransferRequest(res, req)
 }
 
 func main() {
