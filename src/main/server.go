@@ -20,7 +20,7 @@ type ServerHandler struct {
 	s *core.Server
 }
 
-func (sh *ServerHandler) HandleRequest(res http.ResponseWriter, req *http.Request) {
+func (sh *ServerHandler) HandleLightRequest(res http.ResponseWriter, req *http.Request) {
 	msg, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		res.Write([]byte(err.Error()))
@@ -68,7 +68,7 @@ func main() {
 }
 
 func handleHttp(sh *ServerHandler, ip string) {
-	http.HandleFunc("/", sh.HandleRequest)
+	http.HandleFunc("/light", sh.HandleLightRequest)
 	err := http.ListenAndServe(ip+":8081", nil)
 	if err != nil {
 		log.Fatal(err)
