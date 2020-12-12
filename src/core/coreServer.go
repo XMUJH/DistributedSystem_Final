@@ -67,7 +67,7 @@ func (s * Server) keepRefresh() {
 // call for RPCs
 //
 func call(rpcname string, args interface{}, reply interface{}) bool {
-	c, err := rpc.DialHTTP("tcp", "192.168.1.252:1234")
+	c, err := rpc.DialHTTP("tcp", "172.17.40.2:1234")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
