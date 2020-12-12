@@ -31,7 +31,7 @@ func (sh *ServerHandler) HandleLightRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	time.Sleep(time.Millisecond * 10)
+	time.Sleep(time.Millisecond)
 	fmt.Println("Light Request Handled by Server")
 
 	//Output Format
@@ -65,7 +65,7 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond*100)
 	fmt.Println("Heavy Request Handled by Server")
 
 	//Output Format
