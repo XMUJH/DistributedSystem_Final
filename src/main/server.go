@@ -15,9 +15,25 @@ import (
 	"log"
 	"net/http"
 )
+import "crypto/rand"
+import "math/big"
+import "strconv"
+import "crypto/sha1"
 
 type ServerHandler struct {
 	s *core.Server
+}
+
+func getRandomString() string {
+	tag := make([]byte, 100)
+	for i:=0;i<100;i++ {
+		result, _ := rand.Int(rand.Reader, big.NewInt(int64(26)))
+		index, _ := strconv.Atoi(result.String())
+		b := index + 65
+        tag[i] = byte(b)
+	}
+
+	return string(tag)
 }
 
 func (sh *ServerHandler) HandleLightRequest(res http.ResponseWriter, req *http.Request) {
@@ -31,7 +47,14 @@ func (sh *ServerHandler) HandleLightRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	time.Sleep(time.Millisecond)
+	for i:=0;i<10;i++ {
+		tagString := getRandomString()
+		//fmt.Println(tagString)
+		Sha1Inst := sha1.New()
+		Sha1Inst.Write([]byte(tagString))
+		_ = Sha1Inst.Sum([]byte(""))
+	}
+
 	fmt.Println("Light Request Handled by Server")
 
 	//Output Format
@@ -65,7 +88,14 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	time.Sleep(time.Millisecond*100)
+	for i:=0;i<1000;i++ {
+		tagString := getRandomString()
+		//fmt.Println(tagString)
+		Sha1Inst := sha1.New()
+		Sha1Inst.Write([]byte(tagString))
+		_ = Sha1Inst.Sum([]byte(""))
+	}
+	
 	fmt.Println("Heavy Request Handled by Server")
 
 	//Output Format
