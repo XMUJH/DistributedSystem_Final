@@ -127,13 +127,13 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 	//Reverse Proxy
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
-		//dist := lb.minLoad()
+		dist := lb.minLoad()
 
 		//rrLock.Lock()
 		//dist := lb.roundRobin()
 		//rrLock.Unlock()
 
-		dist := lb.randomSelect()
+		//dist := lb.randomSelect()
 
 		url, _ := url.Parse("http://"+dist)
 
@@ -228,6 +228,11 @@ func (lb *LoadBalancer) benchmarks() {
 			}
 			fmt.Println("max Divide min")
 			fmt.Println(lb.maxDmin)
+			lb.isStart = false
+			lb.maxDmin = []float64{}
+			lb.loadMonitor = make(map[string][]float64)
+			lb.requestCnt = make(map[string]int)
+			return 
 		}
 
 	}
