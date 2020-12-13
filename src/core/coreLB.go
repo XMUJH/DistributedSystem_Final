@@ -15,6 +15,8 @@ import "sync"
 import "crypto/rand"
 import "time"
 import "math/big"
+import "encoding/csv"
+import "os"
 
 var mapLock sync.Mutex
 var rrLock sync.Mutex
@@ -127,13 +129,13 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 	//Reverse Proxy
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
-		dist := lb.minLoad()
+		//dist := lb.minLoad()
 
 		//rrLock.Lock()
 		//dist := lb.roundRobin()
 		//rrLock.Unlock()
 
-		//dist := lb.randomSelect()
+		dist := lb.randomSelect()
 
 		url, _ := url.Parse("http://"+dist)
 
@@ -193,7 +195,7 @@ func (lb *LoadBalancer) randomSelect() string {
 //benchmarks
 func (lb *LoadBalancer) benchmarks() {
 	for true {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 1)
 
 		mapLock.Lock()
 		for k, v := range lb.allServers {
@@ -222,12 +224,48 @@ func (lb *LoadBalancer) benchmarks() {
 		}
 
 		if(flag==false) {
-			for k, v := range lb.loadMonitor {
-				fmt.Println(k)
-				fmt.Println(v)
+			// for k, v := range lb.loadMonitor {
+			// 	fmt.Println(k)
+			// 	fmt.Println(v)
+			// }
+			for i := 0; i<len(lb.originalList);i++ {
+				fmt.Println(lb.originalList[i])
+				fmt.Println(lb.loadMonitor[lb.originalList[i]])
 			}
-			fmt.Println("max Divide min")
-			fmt.Println(lb.maxDmin)
+
+			//Write Resutl
+			file, err := os.OpenFile("serverLoad.csv", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
+			if err != nil {
+				fmt.Println("open file is failed, err: ", err)
+		     }
+			defer file.Close()
+			
+			file.WriteString("\xEF\xBB\xBF")
+			w := csv.NewWriter(file)
+			writeList := []string{}
+
+			writeList=append(writeList, "time")
+			for i := 0; i<len(lb.originalList);i++ {
+				writeList = append(writeList, lb.originalList[i])
+			}
+			w.Write(writeList)
+			w.Flush()
+			writeList = []string{}
+			
+			timeIndex := 1
+			for i:= 0; i<len(lb.loadMonitor[lb.originalList[0]]); i++{
+				writeList=append(writeList, strconv.Itoa(timeIndex))
+				timeIndex++
+				for j := 0; j<len(lb.originalList);j++ {
+					writeList=append(writeList, strconv.FormatFloat(lb.loadMonitor[lb.originalList[j]][i], 'E', -1, 64))
+				}
+				w.Write(writeList)
+				w.Flush()
+				writeList = []string{}
+			}
+
+			//fmt.Println("max Divide min")
+			//fmt.Println(lb.maxDmin)
 			lb.isStart = false
 			lb.maxDmin = []float64{}
 			lb.loadMonitor = make(map[string][]float64)
