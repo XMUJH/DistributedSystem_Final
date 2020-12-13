@@ -257,7 +257,7 @@ func (lb *LoadBalancer) benchmarks() {
 				writeList=append(writeList, strconv.Itoa(timeIndex))
 				timeIndex++
 				for j := 0; j<len(lb.originalList);j++ {
-					writeList=append(writeList, strconv.FormatFloat(lb.loadMonitor[lb.originalList[j]][i], 'E', -1, 64))
+					writeList=append(writeList, strconv.FormatFloat(lb.loadMonitor[lb.originalList[j]][i], 'f', -1, 64))
 				}
 				w.Write(writeList)
 				w.Flush()
