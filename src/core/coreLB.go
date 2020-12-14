@@ -129,13 +129,13 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 	//Reverse Proxy
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
-		//dist := lb.minLoad()
+		dist := lb.minLoad()
 
 		//rrLock.Lock()
 		//dist := lb.roundRobin()
 		//rrLock.Unlock()
 
-		dist := lb.randomSelect()
+		//dist := lb.randomSelect()
 
 		url, _ := url.Parse("http://"+dist)
 
@@ -195,7 +195,7 @@ func (lb *LoadBalancer) randomSelect() string {
 //benchmarks
 func (lb *LoadBalancer) benchmarks() {
 	for true {
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * 333)
 
 		mapLock.Lock()
 		for k, v := range lb.allServers {
