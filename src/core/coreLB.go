@@ -157,20 +157,40 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 
 // Min Load
 func (lb *LoadBalancer) minLoad() string {
-	var listServer = []ServerInfo{}
+	//var listServer = []ServerInfo{}
+	weight := []float64{}
+	var totRest float64 = 0
+
 	mapLock.Lock()
-	for k, v := range lb.allServers {
-		listServer = append(listServer, ServerInfo {k, v})
+	for _, v := range lb.allServers {
+		totRest += (100 - v)
+	}
+	for i:=0; i<len(lb.originalList);i++ {
+		weight = append(weight, (100 - lb.allServers[lb.originalList[i]]) / totRest * 256)
+
 	}
 	mapLock.Unlock()
 
-	sort.Slice(listServer, func(i, j int) bool {
-		return listServer[i].Load < listServer[j].Load 
-	})
+	result, _ := rand.Int(rand.Reader, big.NewInt(int64(256)))
+	index, _ := strconv.Atoi(result.String())
+
+	if(float64(index) < weight[0]) {
+		return lb.originalList[0]
+	} else if (float64(index) < weight[0] + weight[1]){
+		return lb.originalList[1]
+	} else if (float64(index) < weight[0] + weight[1] + weight[2]) {
+		return lb.originalList[2]
+	} else {
+		return lb.originalList[3]
+	}
+
+	// sort.Slice(listServer, func(i, j int) bool {
+	// 	return listServer[i].Load < listServer[j].Load 
+	// })
 
 	//fmt.Println(listServer)
 
-	return listServer[0].Address
+	//return listServer[0].Address
 }
 
 //Round Robin
@@ -195,7 +215,8 @@ func (lb *LoadBalancer) randomSelect() string {
 //benchmarks
 func (lb *LoadBalancer) benchmarks() {
 	for true {
-		time.Sleep(time.Millisecond * 333)
+		//time.Sleep(time.Millisecond * 333)
+		time.Sleep(time.Second * 1)
 
 		mapLock.Lock()
 		for k, v := range lb.allServers {
