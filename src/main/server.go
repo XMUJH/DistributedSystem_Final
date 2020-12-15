@@ -47,7 +47,7 @@ func (sh *ServerHandler) HandleLightRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	for i:=0;i<1;i++ {
+	for i:=0;i<10;i++ {
 		tagString := getRandomString()
 		//fmt.Println(tagString)
 		Sha1Inst := sha1.New()
@@ -88,7 +88,7 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	for i:=0;i<100;i++ {
+	for i:=0;i<10000;i++ {
 		tagString := getRandomString()
 		//fmt.Println(tagString)
 		Sha1Inst := sha1.New()

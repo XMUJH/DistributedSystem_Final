@@ -23,6 +23,9 @@ var rrLock sync.Mutex
 var benchMarkLock sync.Mutex
 var startLock sync.Mutex
 
+var fileFirstName string
+var fileLastName string
+
 type LoadBalancer struct {
 	allServers map[string]float64
 	index map[string]int
@@ -54,6 +57,8 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.loadMonitor = make(map[string][]float64)
 	lb.requestCnt = make(map[string]int)
 	lb.isStart = false
+
+	fileFirstName = "3-100_"
 
 	lb.server(ip)
 
@@ -130,14 +135,18 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
 		//dist := lb.minLoad()
+		//fileLastName = "MinLoad"
 
 		dist := lb.weighted()
+		fileLastName = "Weight"
 
 		//rrLock.Lock()
 		//dist := lb.roundRobin()
 		//rrLock.Unlock()
+		//fileLastName = "RR"
 
 		//dist := lb.randomSelect()
+		//fileLastName = "Random"
 
 		url, _ := url.Parse("http://"+dist)
 
@@ -304,7 +313,7 @@ func (lb *LoadBalancer) benchmarks() {
 			}
 
 			//Write Resutl
-			file, err := os.OpenFile("serverLoad.csv", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
+			file, err := os.OpenFile(fileFirstName+fileLastName+".csv", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 			if err != nil {
 				fmt.Println("open file is failed, err: ", err)
 		     }
