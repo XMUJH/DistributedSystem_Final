@@ -161,14 +161,17 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 func (lb *LoadBalancer) minLoad() string {
 	//var listServer = []ServerInfo{}
 	weight := []float64{}
-	var totRest float64 = 0
+	//var totRest float64 = 0
+	var totCpu float64 = 0
 
 	mapLock.Lock()
 	for _, v := range lb.allServers {
-		totRest += (100 - v)
+		//totRest += (100 - v)
+		totCpu += v
 	}
 	for i:=0; i<len(lb.originalList);i++ {
-		weight = append(weight, (100 - lb.allServers[lb.originalList[i]]) / totRest * 256)
+		//weight = append(weight, (100 - lb.allServers[lb.originalList[i]]) / totRest * 256)
+		weight = append(weight, (256 * (totCpu - lb.allServers[lb.originalList[i]])) / totCpu / 3)
 
 	}
 	mapLock.Unlock()
