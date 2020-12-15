@@ -3,7 +3,7 @@ package core
 import (
 	"log"
 	"fmt"
-	"sort"
+	//"sort"
 )
 import "net"
 import "net/rpc"
@@ -32,7 +32,7 @@ type LoadBalancer struct {
 
 	proxyMap map[string]*httputil.ReverseProxy
 
-	maxDmin []float64
+	//maxDmin []float64
 	loadMonitor map[string][]float64
 	requestCnt map[string]int
 
@@ -50,7 +50,7 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.serverCnt = 0
 	lb.originalList = []string{}
 	lb.lastServer = -1;
-	lb.maxDmin = []float64{}
+	//lb.maxDmin = []float64{}
 	lb.loadMonitor = make(map[string][]float64)
 	lb.requestCnt = make(map[string]int)
 	lb.isStart = false
@@ -129,7 +129,9 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 	//Reverse Proxy
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
-		dist := lb.minLoad()
+		//dist := lb.minLoad()
+
+		dist := lb.weighted()
 
 		//rrLock.Lock()
 		//dist := lb.roundRobin()
@@ -193,6 +195,50 @@ func (lb *LoadBalancer) minLoad() string {
 	//return listServer[0].Address
 }
 
+// Weighted
+func (lb *LoadBalancer) weighted() string {
+
+	weight := []float64{}
+	var totRequest float64 = 0
+	requests := []float64{}
+
+
+	flag := false
+	benchMarkLock.Lock()
+	for i:=0; i<len(lb.originalList);i++ {
+		requests = append(requests, float64(lb.requestCnt[lb.originalList[i]]))
+		totRequest += float64(lb.requestCnt[lb.originalList[i]])
+		if(lb.requestCnt[lb.originalList[i]]!=0) {
+			flag=true
+		}
+	}
+	benchMarkLock.Unlock()
+
+	if (flag == false) {
+		for i := 0; i<len(requests); i++ {
+			weight = append(weight, float64(64))
+		}
+	} else {
+		for i := 0; i<len(requests); i++ {
+			weight = append(weight, (256 * (totRequest - requests[i])) / totRequest / 3)
+		}
+	}
+
+	result, _ := rand.Int(rand.Reader, big.NewInt(int64(256)))
+	index, _ := strconv.Atoi(result.String())
+
+	if(float64(index) < weight[0]) {
+		return lb.originalList[0]
+	} else if (float64(index) < weight[0] + weight[1]){
+		return lb.originalList[1]
+	} else if (float64(index) < weight[0] + weight[1] + weight[2]) {
+		return lb.originalList[2]
+	} else {
+		return lb.originalList[3]
+	}
+
+}
+
 //Round Robin
 func (lb *LoadBalancer) roundRobin() string {
 	lb.lastServer++
@@ -224,11 +270,11 @@ func (lb *LoadBalancer) benchmarks() {
 		}
 		mapLock.Unlock()
 
-		var cntList = []int{}
+		//var cntList = []int{}
 		flag := false
 		benchMarkLock.Lock()
 		for k, v := range lb.requestCnt {
-			cntList = append(cntList, v)
+			//cntList = append(cntList, v)
 			if(v!=0) {
 				flag=true
 			}
@@ -236,13 +282,13 @@ func (lb *LoadBalancer) benchmarks() {
 		}
 		benchMarkLock.Unlock()
 
-		sort.Slice(cntList, func(i, j int) bool {
-			return cntList[i] < cntList[j]
-		})
+		// sort.Slice(cntList, func(i, j int) bool {
+		// 	return cntList[i] < cntList[j]
+		// })
 
-		if(len(cntList)!=0) {
-			lb.maxDmin = append(lb.maxDmin, float64(cntList[len(cntList)-1])/float64(cntList[0]))
-		}
+		// if(len(cntList)!=0) {
+		// 	lb.maxDmin = append(lb.maxDmin, float64(cntList[len(cntList)-1])/float64(cntList[0]))
+		// }
 
 		if(flag==false) {
 			// for k, v := range lb.loadMonitor {
@@ -288,7 +334,7 @@ func (lb *LoadBalancer) benchmarks() {
 			//fmt.Println("max Divide min")
 			//fmt.Println(lb.maxDmin)
 			lb.isStart = false
-			lb.maxDmin = []float64{}
+			//lb.maxDmin = []float64{}
 			lb.loadMonitor = make(map[string][]float64)
 			lb.requestCnt = make(map[string]int)
 			return 
