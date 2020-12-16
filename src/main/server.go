@@ -88,17 +88,21 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	for i:=0;i<500;i++ {
-		tagString := getRandomString()
-		//fmt.Println(tagString)
-		Sha1Inst := sha1.New()
-		Sha1Inst.Write([]byte(tagString))
-		_ = Sha1Inst.Sum([]byte(""))
-	}
+	// for i:=0;i<500;i++ {
+	// 	tagString := getRandomString()
+	// 	//fmt.Println(tagString)
+	// 	Sha1Inst := sha1.New()
+	// 	Sha1Inst.Write([]byte(tagString))
+	// 	_ = Sha1Inst.Sum([]byte(""))
+	// }
 	// for i:=0;i<100;i++ {
 	// 	time.Sleep(time.Millisecond * 10)
 	// }
-
+	tool :=0
+	for i:= 0; i<15000000; i++ {
+		tool = 999*999
+	}
+	fmt.Println(tool)
 	
 	fmt.Println("Heavy Request Handled by Server")
 
