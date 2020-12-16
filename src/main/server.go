@@ -95,9 +95,9 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
 	// 	Sha1Inst.Write([]byte(tagString))
 	// 	_ = Sha1Inst.Sum([]byte(""))
 	// }
-	for i:=0;i<100;i++ {
-		time.Sleep(time.Millisecond * 10)
-	}
+
+	time.Sleep(time.Second * 2)
+
 	
 	fmt.Println("Heavy Request Handled by Server")
 
