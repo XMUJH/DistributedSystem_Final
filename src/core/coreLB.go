@@ -58,7 +58,7 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.requestCnt = make(map[string]int)
 	lb.isStart = false
 
-	fileFirstName = "3-100_"
+	fileFirstName = "1-300_"
 
 	lb.server(ip)
 
@@ -134,11 +134,11 @@ func (lb *LoadBalancer) TransferRequest(res http.ResponseWriter, req *http.Reque
 	//Reverse Proxy
 	if(len(lb.allServers)>0) {
 		//LB Algorithm
-		//dist := lb.minLoad()
-		//fileLastName = "MinLoad"
+		dist := lb.minLoad()
+		fileLastName = "MinLoad"
 
-		dist := lb.weighted()
-		fileLastName = "Weight"
+		//dist := lb.weighted()
+		//fileLastName = "Weight"
 
 		//rrLock.Lock()
 		//dist := lb.roundRobin()
@@ -273,8 +273,8 @@ func (lb *LoadBalancer) randomSelect() string {
 //benchmarks
 func (lb *LoadBalancer) benchmarks() {
 	for true {
-		//time.Sleep(time.Millisecond * 333)
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * 200)
+		//time.Sleep(time.Second * 1)
 
 		mapLock.Lock()
 		for k, v := range lb.allServers {
