@@ -58,7 +58,7 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.requestCnt = make(map[string]int)
 	lb.isStart = false
 
-	fileFirstName = "1-50_"
+	fileFirstName = "2-100_"
 
 	lb.server(ip)
 

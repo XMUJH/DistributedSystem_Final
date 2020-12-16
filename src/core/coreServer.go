@@ -56,11 +56,10 @@ func (s *Server) Report() {
 //keep refresh Load on the server
 func (s * Server) keepRefresh() {
 	for true {
-		//time.Sleep(time.Millisecond * 200)
+		//time.Sleep(time.Millisecond * 333)
 		time.Sleep(time.Second * 1)
 
 		s.Info.Load = GetCpuPercent()
-		//fmt.Println(s.Info.Load)
 		s.Report()
 	}
 }
