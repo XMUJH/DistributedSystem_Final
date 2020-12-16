@@ -60,7 +60,7 @@ func (s * Server) keepRefresh() {
 		time.Sleep(time.Second * 1)
 
 		s.Info.Load = GetCpuPercent()
-		fmt.Println(s.Info.Load)
+		//fmt.Println(s.Info.Load)
 		s.Report()
 	}
 }
