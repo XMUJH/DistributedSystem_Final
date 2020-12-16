@@ -26,7 +26,7 @@ func InitiationServer(address string) *Server {
 	s.Info.Address = address
 	s.Info.Load = GetCpuPercent()
 
-	s.Registration()
+	//s.Registration()
 
 	go s.keepRefresh()
 
@@ -60,7 +60,8 @@ func (s * Server) keepRefresh() {
 		//time.Sleep(time.Second * 1)
 
 		s.Info.Load = GetCpuPercent()
-		s.Report()
+		fmt.Println(s.Info.Load)
+		//s.Report()
 	}
 }
 
