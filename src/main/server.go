@@ -99,7 +99,7 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
 	// 	time.Sleep(time.Millisecond * 10)
 	// }
 	tool :=0
-	for i:= 0; i<15000000; i++ {
+	for i:= 0; i<1000000000; i++ {
 		tool = 999*999
 	}
 	fmt.Println(tool)
