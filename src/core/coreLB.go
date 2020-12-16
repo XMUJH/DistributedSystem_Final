@@ -58,7 +58,7 @@ func InitiationLB(ip string) *LoadBalancer {
 	lb.requestCnt = make(map[string]int)
 	lb.isStart = false
 
-	fileFirstName = "1-300_"
+	fileFirstName = "1-50_"
 
 	lb.server(ip)
 
@@ -273,8 +273,8 @@ func (lb *LoadBalancer) randomSelect() string {
 //benchmarks
 func (lb *LoadBalancer) benchmarks() {
 	for true {
-		time.Sleep(time.Millisecond * 200)
-		//time.Sleep(time.Second * 1)
+		//time.Sleep(time.Millisecond * 200)
+		time.Sleep(time.Second * 1)
 
 		mapLock.Lock()
 		for k, v := range lb.allServers {
