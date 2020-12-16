@@ -18,7 +18,7 @@ import (
 import "crypto/rand"
 import "math/big"
 import "strconv"
-import "crypto/sha1"
+//import "crypto/sha1"
 
 type ServerHandler struct {
 	s *core.Server
@@ -47,18 +47,26 @@ func (sh *ServerHandler) HandleLightRequest(res http.ResponseWriter, req *http.R
     }
 
 	//Server Process Request
-	for i:=0;i<1;i++ {
-		tagString := getRandomString()
-		//fmt.Println(tagString)
-		Sha1Inst := sha1.New()
-		Sha1Inst.Write([]byte(tagString))
-		_ = Sha1Inst.Sum([]byte(""))
+	// for i:=0;i<1;i++ {
+	// 	tagString := getRandomString()
+	// 	//fmt.Println(tagString)
+	// 	Sha1Inst := sha1.New()
+	// 	Sha1Inst.Write([]byte(tagString))
+	// 	_ = Sha1Inst.Sum([]byte(""))
+	// }
+
+	tool :=0
+	for i:= 0; i<10000000; i++ {
+		tool = 1
 	}
 
-	fmt.Println("Light Request Handled by Server")
+	//fmt.Println(tool)
+
+	//fmt.Println("Light Request Handled by Server")
 
 	//Output Format
-	noUse := "This msg is from server (light)"
+	noUse := strconv.Itoa(tool)
+	noUse = "This msg is from server (light)"
 	type OutPut struct {
 		NoUse string `json:"no_use"`
 	}
@@ -102,12 +110,13 @@ func (sh *ServerHandler) HandleHeavyRequest(res http.ResponseWriter, req *http.R
 	for i:= 0; i<1000000000; i++ {
 		tool = 1
 	}
-	fmt.Println(tool)
+	//fmt.Println(tool)
 	
-	fmt.Println("Heavy Request Handled by Server")
+	//fmt.Println("Heavy Request Handled by Server")
 
 	//Output Format
-	noUse := "This msg is from server (heavy)"
+	noUse := strconv.Itoa(tool)
+	noUse = "This msg is from server (heavy)"
 	type OutPut struct {
 		NoUse string `json:"no_use"`
 	}
